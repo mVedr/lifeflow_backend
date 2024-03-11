@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
@@ -17,3 +19,4 @@ async def Home():
     return HTMLResponse(res)
 
 app.include_router(router.route)
+asyncio.create_task(router.consume())
