@@ -1,0 +1,1 @@
+git add --all -- ':!notifier/config.py'
