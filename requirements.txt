@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+asyncio
+aiohttp
+aiosmtplib
+redis
+python-dateutil
+pydantic
+mysql-connector-python
+sqlalchemy
