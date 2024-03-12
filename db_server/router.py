@@ -56,8 +56,31 @@ async def getEntityProfile(id: int,db: Session = Depends(get_db)):
 
 @route.patch("/user/{id}")
 async def updateUserProfile(id: int,new_user: apiModels.UserProfile,db: Session = Depends(get_db)):
-    pass
+    db_user = get_user(db,id)
+    if db_user is None:
+        return HTTPException(status_code=404,
+                             detail="User not found")
+    
+    user_data = new_user.model_dump()
+
+    for k,v in user_data.items():
+        setattr(db_user,k,v)
+
+    db.commit()
+    return db_user
 
 @route.patch("/entity/{id}")
-async def updateEntityProfile(id: int,new_user: apiModels.EntityProfile,db: Session = Depends(get_db)):
-    pass
+async def updateEntityProfile(id: int,new_entity: apiModels.EntityProfile,db: Session = Depends(get_db)):
+    db_entity = get_entity(db,id)
+    if db_entity is None:
+        return HTTPException(status_code=404,
+                             detail="Entity not found")
+    user_data = new_entity.model_dump()
+
+    for k,v in user_data.items():
+        setattr(db_entity,k,v)
+
+    db.commit()
+    return db_entity    
+
+    
