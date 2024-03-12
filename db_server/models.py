@@ -9,11 +9,27 @@ engine = create_engine(db_url)
 Base = declarative_base()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-class BaseModel(Base):
+class ReprMixin:
+
+    def __repr__(self):
+        package = self.__class__.__module__
+        class_ = self.__class__.__name__
+        attrs = sorted((k, getattr(self, k)) for k in self.__mapper__.columns.keys())
+        sattrs = ', '.join(f'{key}={value!r}' for key, value in attrs)
+        return f'{package}.{class_}({sattrs})'
+
+class BaseModel(Base,
+               # ReprMixin
+                ):
     __abstract__ = True
     __allow_unmapped__ = True
 
     id = Column(Integer, primary_key=True)
+
+class ReceiverEntity(BaseModel):
+    __tablename__ = 'receiver_entity'
+    receiver_id = Column('receiver_id',Integer,ForeignKey('users.id'))
+    entity_id = Column('entity_id',Integer,ForeignKey('entities.id'))
 
 #USER
 class User(BaseModel):
@@ -27,9 +43,24 @@ class User(BaseModel):
     profile_url = Column(String(255))
     location = Column(String(255))
     verified = Column(Boolean)
-    
+    volumeRequiredWhileReceiving = Column(String(10))
+    volumeDonated = Column(String(10))
+
+    donations = relationship("Donor",back_populates="user_info",uselist=True)
+
+    requested_at = relationship("Entity",secondary='receiver_entity',back_populates='waitlist')
+
     transactions_sent = relationship('Transaction', foreign_keys='Transaction.from_id', back_populates='sender', uselist=True)
     transactions_received = relationship('Transaction', foreign_keys='Transaction.to_id', back_populates='receiver', uselist=True)
+
+#DONOR
+class Donor(BaseModel):
+    __tablename__ = 'donors'
+    available_vol = Column(String(10))
+    user_id = Column(ForeignKey("users.id"))
+    user_info = relationship("User",back_populates="donations",uselist=False)
+    entity_id = Column(ForeignKey("entities.id"))
+    entity_info = relationship("Entity",back_populates="donors", uselist=False)
 
 #HOSPITAL/BB
 class Entity(BaseModel):
@@ -44,6 +75,10 @@ class Entity(BaseModel):
     primary_email = Column(String(255), unique=True)
     secondary_email = Column(String(255))
     transactions = relationship('Transaction', back_populates='entity',uselist=True)
+    #donors list
+    donors = relationship("Donor", back_populates="entity_info", uselist=True)
+    #receivers list
+    waitlist = relationship("User",secondary='receiver_entity',back_populates='requested_at')
     
 #TRANSACTION
 class Transaction(BaseModel):

@@ -8,3 +8,5 @@ python-dateutil
 pydantic
 mysql-connector-python
 sqlalchemy
+pytesseract 
+pydf

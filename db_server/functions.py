@@ -45,8 +45,37 @@ def create_entity(db: Session,entity: apiModels.EntityRegister):
     else:
         return None
 
-def update_user(db: Session,id :int,user: apiModels.UserProfile):
-    pass
+def donate_blood(entity_id: int,available_vol: str,email: str,db: Session):
+    en = get_entity(db, entity_id)
+    user = get_user_by_email(db, email)
+    if en is None or user is None:
+        return False
+    donor = models.Donor(
+        available_vol = available_vol,
+        entity_info = en,
+        user_info = user
+    )
+    en.donors.append(donor)
+    db.commit()
+    return True
 
-def update_entity(db: Session,id :int,entity: apiModels.EntityProfile):
-    pass
+def request_blood(entity_id: int,email: str,db: Session):
+    en = get_entity(db, entity_id)
+    user = get_user_by_email(db, email)
+    if en is None or user is None:
+        return False
+    en.waitlist.append(user)
+    db.commit()
+    return True
+
+def get_waitlist(entity_id: int,db: Session):
+    entity = db.query(models.Entity).where(models.Entity.id == entity_id).one_or_none()
+    if entity is None:
+        return None
+    return entity.waitlist
+
+def get_donorlist(entity_id: int,db: Session):
+    entity = db.query(models.Entity).where(models.Entity.id == entity_id).one_or_none()
+    if entity is None:
+        return None
+    return entity.donors

@@ -83,4 +83,37 @@ async def updateEntityProfile(id: int,new_entity: apiModels.EntityProfile,db: Se
     db.commit()
     return db_entity    
 
-    
+@route.post("/donate/{entity_id}")
+async def donateViaEntity(entity_id: int,vol: str,donor: apiModels.UserRegisterWithEmail,db: Session = Depends(get_db)):
+    res = donate_blood(entity_id=entity_id,available_vol=vol,email=donor.email,db=db)
+    if res:
+        return {"message": "Donation has been added"}
+    raise HTTPException(404,"Resources not found")
+
+@route.post("/notify_donors")
+async def notifyDonors(donor: apiModels.UserProfile):
+    pass
+
+@route.post("/request/{entity_id}")
+async def requestBlood(entity_id: int,receiver: apiModels.UserRegisterWithEmail,
+                    db: Session = Depends(get_db)):
+    res = request_blood(entity_id,receiver.email,db)
+    if res:
+        return {"message": "Added to waitlist"}
+    raise HTTPException(404,"Resources not found")
+
+@route.get("/waitlist/{entity_id}")
+async def getWaitlist(entity_id: int,db: Session = Depends(get_db)):
+    lst = get_waitlist(entity_id,db)
+    if lst is None:
+        return HTTPException(status_code=404,
+                             detail="Entity not found")
+    return lst
+
+@route.get("/donors/{entity_id}")
+async def getDonors(entity_id: int,db: Session = Depends(get_db)):
+    lst = get_donorlist(entity_id,db)
+    if lst is None:
+        return HTTPException(status_code=404,
+                             detail="Entity not found")
+    return lst
