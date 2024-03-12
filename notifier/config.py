@@ -3,7 +3,7 @@ import asyncio
 KAFKA_BOOTSTRAP_SERVERS="localhost:9092"
 KAFKA_TOPIC="notification"
 SENDER_EMAIL="vedrecharla@gmail.com"
-SENDER_PASSWORD="YOUR_EMAIL_APP_PASSWORD"
+SENDER_PASSWORD="ufigcomstwktbqvz"
 SMTP_SERVER="smtp.gmail.com"
 SMTP_PORT=587
 

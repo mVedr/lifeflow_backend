@@ -2,7 +2,7 @@ from sqlalchemy import (Boolean, Column, Date, DateTime, ForeignKey, Integer,
                         String, create_engine, func)
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
-db_url = "mysql+mysqlconnector://lifeflow:lifeflow@localhost/lifeflow"
+db_url = "mysql+mysqlconnector://lifeflow:lifeflow@127.0.0.1:3307/lifeflow"
 
 engine = create_engine(db_url)
 
@@ -16,47 +16,46 @@ class BaseModel(Base):
     id = Column(Integer, primary_key=True)
 
 #USER
-
-# Entity_Id
-
-class User(Base):
+class User(BaseModel):
     __tablename__ = 'users'
-    name = Column(String)
+    name = Column(String(255))
     dob = Column(Date)
-    email = Column(String,unique=True)
-    phone_number = Column(String,unique=True)
-    blood_group = Column(String)
-    sex = Column(String)
-    profile_url = Column(String)
-    location = Column(String)
+    email = Column(String(255), unique=True)
+    phone_number = Column(String(255), unique=True)
+    blood_group = Column(String(255))
+    sex = Column(String(255))
+    profile_url = Column(String(255))
+    location = Column(String(255))
+    verified = Column(Boolean)
     
-    transactions_sent = relationship('Transaction',  back_populates='sender',uselist=True)
-
-    transactions_received = relationship('Transaction',  back_populates='receiver',uselist=True)
+    transactions_sent = relationship('Transaction', foreign_keys='Transaction.from_id', back_populates='sender', uselist=True)
+    transactions_received = relationship('Transaction', foreign_keys='Transaction.to_id', back_populates='receiver', uselist=True)
 
 #HOSPITAL/BB
-    
-# Phone Numbers []
-# Emails []
-    
-class Entity(Base):
+class Entity(BaseModel):
     __tablename__ = 'entities'
-    name = Column(String)
-    location = Column(String)
-    photo_url = Column(String)
-    website_url = Column(String,unique=True) 
-    reg_number = Column(String,unique=True)
-    
+    name = Column(String(255))
+    location = Column(String(255))
+    photo_url = Column(String(255))
+    website_url = Column(String(255)) 
+    reg_number = Column(String(255), unique=True)
+    primary_ph_no = Column(String(255), unique=True)
+    secondary_ph_no = Column(String(255))
+    primary_email = Column(String(255), unique=True)
+    secondary_email = Column(String(255))
     transactions = relationship('Transaction', back_populates='entity',uselist=True)
     
-class Transaction(Base):
-    __table_name__ = 'transactions'
-    date_time = Column(DateTime,default=func.now())
-    from_id = Column(Integer,ForeignKey('users.id')) 
-    to_id = Column(Integer,ForeignKey('users.id')) 
+#TRANSACTION
+class Transaction(BaseModel):
+    __tablename__ = 'transactions'
+    date_time = Column(DateTime, default=func.now())
+    from_id = Column(Integer, ForeignKey('users.id'))
+    to_id = Column(Integer, ForeignKey('users.id'))
     entity_id = Column(Integer, ForeignKey('entities.id'))
-    volume = Column(String)
+    volume = Column(String(255))
 
-    sender = relationship('User',back_populates='transactions_sent')
-    receiver = relationship('User',back_populates='transactions_received')
-    entity = relationship('Entity', back_populates='transactions')
+    sender = relationship('User', foreign_keys=[from_id], back_populates='transactions_sent', uselist=False)
+    receiver = relationship('User', foreign_keys=[to_id], back_populates='transactions_received', uselist=False)
+    entity = relationship('Entity', back_populates='transactions', uselist=False)
+
+Base.metadata.create_all(engine)
