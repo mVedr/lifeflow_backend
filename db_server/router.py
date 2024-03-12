@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from .functions import *
@@ -54,7 +55,7 @@ async def getEntityProfile(id: int,db: Session = Depends(get_db)):
                             detail="Entity not found")
     return entity
 
-@route.patch("/user/{id}")
+@route.patch("/user/{id}")    
 async def updateUserProfile(id: int,new_user: apiModels.UserProfile,db: Session = Depends(get_db)):
     db_user = get_user(db,id)
     if db_user is None:
@@ -84,7 +85,7 @@ async def updateEntityProfile(id: int,new_entity: apiModels.EntityProfile,db: Se
     return db_entity    
 
 @route.post("/donate/{entity_id}")
-async def donateViaEntity(entity_id: int,vol: str,donor: apiModels.UserRegisterWithEmail,db: Session = Depends(get_db)):
+async def donateViaEntity(entity_id: int,vol: int,donor: apiModels.UserRegisterWithEmail,db: Session = Depends(get_db)):
     res = donate_blood(entity_id=entity_id,available_vol=vol,email=donor.email,db=db)
     if res:
         return {"message": "Donation has been added"}
@@ -117,3 +118,17 @@ async def getDonors(entity_id: int,db: Session = Depends(get_db)):
         return HTTPException(status_code=404,
                              detail="Entity not found")
     return lst
+
+@route.get('/total_volume/{entity_id}')
+async def quantity_by_group(entity_id: int, db: Session = Depends(get_db)):
+    res = group_by_volume(entity_id,db)
+    if res is None:
+        return HTTPException(status_code=404,detail="Entity not found")
+    return res
+
+@route.get("/donors/bloodgroup/{entity_id}")
+async def get_donors_by_bg(entity_id: int,bg: str,  db: Session = Depends(get_db)):
+    res = donors_by_blood_in_entity(entity_id,bg,db)
+    if res is None:
+        return HTTPException(status_code=404,detail="Resources not found")
+    return res

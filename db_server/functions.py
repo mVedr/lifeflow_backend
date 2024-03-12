@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from . import apiModels, models
+from . import apiModels, models, share
 
 
 def get_user(db: Session,id: int):
@@ -45,7 +45,7 @@ def create_entity(db: Session,entity: apiModels.EntityRegister):
     else:
         return None
 
-def donate_blood(entity_id: int,available_vol: str,email: str,db: Session):
+def donate_blood(entity_id: int,available_vol: int,email: str,db: Session):
     en = get_entity(db, entity_id)
     user = get_user_by_email(db, email)
     if en is None or user is None:
@@ -79,3 +79,40 @@ def get_donorlist(entity_id: int,db: Session):
     if entity is None:
         return None
     return entity.donors
+
+def group_by_volume(entity_id: int,db: Session):
+    entity = db.query(models.Entity).where(models.Entity.id == entity_id).one_or_none()
+    if entity is None:
+        return None
+
+    donors: list[models.Donor] = entity.donors
+
+    res = {
+        "O-": 0,
+        "O+": 0,
+        "A-": 0,
+        "A+": 0,
+        "B-": 0,
+        "B+": 0,
+        "AB-": 0,
+        "AB+": 0,
+    }
+
+    for d in donors:
+        usr: models.User = d.user_info
+        bg = usr.blood_group
+        res[bg] += d.available_vol
+    return res
+
+def donors_by_blood_in_entity(entity_id: int,bg: str,  db: Session):
+    entity = get_entity(db, entity_id)
+    if entity is None:
+        return None
+    if bg not in share.can_donate_to:
+        return None
+    res = []
+    donors: list[models.Donor] = entity.donors
+    for d in donors:
+        if d.user_info.blood_group == bg:
+            res.append(d.user_info)
+    return res

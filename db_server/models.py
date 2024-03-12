@@ -43,8 +43,8 @@ class User(BaseModel):
     profile_url = Column(String(255))
     location = Column(String(255))
     verified = Column(Boolean)
-    volumeRequiredWhileReceiving = Column(String(10))
-    volumeDonated = Column(String(10))
+    volumeRequiredWhileReceiving = Column(Integer,default=0)
+    volumeDonated = Column(Integer,default=0)
 
     donations = relationship("Donor",back_populates="user_info",uselist=True)
 
@@ -56,7 +56,7 @@ class User(BaseModel):
 #DONOR
 class Donor(BaseModel):
     __tablename__ = 'donors'
-    available_vol = Column(String(10))
+    available_vol = Column(Integer)
     user_id = Column(ForeignKey("users.id"))
     user_info = relationship("User",back_populates="donations",uselist=False)
     entity_id = Column(ForeignKey("entities.id"))
@@ -87,7 +87,7 @@ class Transaction(BaseModel):
     from_id = Column(Integer, ForeignKey('users.id'))
     to_id = Column(Integer, ForeignKey('users.id'))
     entity_id = Column(Integer, ForeignKey('entities.id'))
-    volume = Column(String(255))
+    volume = Column(Integer,default=0)
 
     sender = relationship('User', foreign_keys=[from_id], back_populates='transactions_sent', uselist=False)
     receiver = relationship('User', foreign_keys=[to_id], back_populates='transactions_received', uselist=False)
