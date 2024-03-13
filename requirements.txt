@@ -5,7 +5,10 @@ aiohttp
 aiokafka
 aiosmtplib
 redis
+aioredis
 python-dateutil
 pydantic
 mysql-connector-python
 sqlalchemy
+pytesseract 
+pydf

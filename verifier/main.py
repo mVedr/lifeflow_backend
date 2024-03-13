@@ -1,6 +1,6 @@
-from PIL import Image 
-from pytesseract import pytesseract 
-  
+from PIL import Image
+from pytesseract import pytesseract
+
 # for image
 path_to_tesseract = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
 image_path = r"download.jpg"
@@ -15,8 +15,7 @@ text = pytesseract.image_to_string(img)
 print(text)
 
 
-from pypdf import PdfReader 
-  
+from pypdf import PdfReader
 
 reader = PdfReader('example.pdf') 
   
