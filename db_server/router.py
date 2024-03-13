@@ -159,3 +159,22 @@ async def get_locations(lat: str ="17.5054036", lon: str ="78.4937645",radius: s
     rs = json.dumps(ans)
     await redis.set(f"{lat}&{lon}&{radius}",rs)
     return ans
+
+@route.get("/search")
+async def search(lat: str ="17.5054036", lon: str ="78.4937645",radius: str = "2000",q: str=""):
+
+    ans = await redis.get(f"{q}&{lat}&{lon}&{radius}")
+    if ans is not None:
+        return json.loads(ans)
+
+    loop = asyncio.get_event_loop()
+    res = await fetch_search(loop,lat,lon,radius,q)
+    ans = []
+    for r in res["results"]:
+        if r["type"] == "POI" and (r["matchConfidence"]["score"] > 0.70 or r["score"]>0.70):
+            ans.append(r)
+
+    ans.sort(key=lambda x: x["score"], reverse=True)
+    rs = json.dumps(ans)
+    await redis.set(f"{q}&{lat}&{lon}&{radius}",rs)
+    return ans

@@ -132,3 +132,10 @@ async def fetch_all(loop,lat,lon,radius):
     async with aiohttp.ClientSession(loop=loop) as session:
         results = await asyncio.gather(*[fetch(session, url) for url in url_list], return_exceptions=True)
         return results
+    
+async def fetch_search(loop, lat, lon, radius, q):
+    url = f'https://api.tomtom.com/search/2/poiSearch/"{q}".json?key={config.TOMTOM_API_KEY}&lat={lat}&lon={lon}&radius={radius}'
+    print(url)
+    async with aiohttp.ClientSession(loop=loop) as session:
+        result = await fetch(session, url)
+        return result

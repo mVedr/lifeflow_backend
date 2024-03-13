@@ -74,6 +74,7 @@ class Entity(BaseModel):
     secondary_ph_no = Column(String(255))
     primary_email = Column(String(255), unique=True)
     secondary_email = Column(String(255))
+    tomtom_id = Column(String(255))
     transactions = relationship('Transaction', back_populates='entity',uselist=True)
     #donors list
     donors = relationship("Donor", back_populates="entity_info", uselist=True)
