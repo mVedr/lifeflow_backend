@@ -40,9 +40,10 @@ def create_user(db: Session,user: apiModels.UserRegisterWithEmail):
     db.commit()
     return new_user
 
-def create_entity(db: Session,entity: apiModels.EntityRegister):
+def create_entity(db: Session,entity: apiModels.EntityRegister,tomtom_id: str):
     if get_entity_by_email(entity.primary_email)!=None and get_entity_by_phone(entity.primary_ph_no)!=None and get_entity_by_regd(entity.reg_number)!=None:
         new_entity = models.Entity(**entity.model_dump())
+        new_entity.tomtom_id = tomtom_id
         db.add(new_entity)
         db.commit()
         return new_entity

@@ -1,12 +1,22 @@
 import json
 
 import aioredis
+import aiosmtplib
+from aiokafka import AIOKafkaProducer
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from .config import KAFKA_BOOTSTRAP_SERVERS, NOTIFICATION_TOPIC, loop
 from .functions import *
 from .models import SessionLocal
+
+
+class Message(BaseModel):
+    to :str
+    subject :str
+    body :str
 
 route = APIRouter()
 redis = aioredis.Redis(host="localhost", port=6379,db=0)
@@ -28,8 +38,8 @@ async def createUser(user: apiModels.UserRegisterWithEmail,db: Session = Depends
     
 
 @route.post("/entity/create")
-async def createEntity(entity: apiModels.EntityRegister ,db: Session = Depends(get_db)):
-    new_entity = create_entity(db,entity)
+async def createEntity(tomtom_id: str,entity: apiModels.EntityRegister ,db: Session = Depends(get_db)):
+    new_entity = create_entity(db,entity,tomtom_id)
     if new_entity is None:
         return {"message":"Credentials are already associated with some other entity"}
     return {"message": "Entity created successfully"}
@@ -91,8 +101,31 @@ async def updateEntityProfile(id: int,new_entity: apiModels.EntityProfile,db: Se
 @route.post("/donate/{entity_id}")
 async def donateViaEntity(entity_id: int,vol: int,donor: apiModels.UserRegisterWithEmail,db: Session = Depends(get_db)):
     res = donate_blood(entity_id=entity_id,available_vol=vol,email=donor.email,db=db)
+    usr = get_user_by_email(db,donor.email)
     if res:
-        return {"message": "Donation has been added"}
+        producer = AIOKafkaProducer(loop=loop,bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
+        await producer.start()
+        message :Message = Message(
+            to="12113002@nitkkr.ac.in", # make this dynamic later
+            subject=f'{usr.name} wants to donate blood',
+            body=
+            f'''
+                {usr.name} wants to donate {usr.blood_group}
+                Quanity: {vol}
+
+                Please reach out quickly
+            '''
+        )
+        
+        try:
+            print(f'Producer Sent: {message}')
+            value_json = json.dumps(message.__dict__).encode('utf-8')
+            await producer.send(topic=NOTIFICATION_TOPIC,value=value_json)
+        except Exception as e:  
+            print(f"Consumer Error: {e}")  #
+        finally:
+            await producer.stop()
+            return {"message": "Donation has been added"}
     raise HTTPException(404,"Resources not found")
 
 @route.post("/notify_donors")
@@ -152,7 +185,7 @@ async def get_locations(lat: str ="17.5054036", lon: str ="78.4937645",radius: s
     ans = []
 
     for result in bb_results + hospital_results:
-        if result["type"] == "POI" and result["score"] > 0.70:
+        if result["type"] == "POI" and result["score"] > 0.90:
             ans.append(result)
 
     ans.sort(key=lambda x: x["score"], reverse=True)
@@ -171,7 +204,7 @@ async def search(lat: str ="17.5054036", lon: str ="78.4937645",radius: str = "2
     res = await fetch_search(loop,lat,lon,radius,q)
     ans = []
     for r in res["results"]:
-        if r["type"] == "POI" and (r["matchConfidence"]["score"] > 0.70 or r["score"]>0.70):
+        if r["type"] == "POI" and ( r["score"]>0.90):
             ans.append(r)
 
     ans.sort(key=lambda x: x["score"], reverse=True)
