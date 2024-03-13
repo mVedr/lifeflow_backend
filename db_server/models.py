@@ -42,7 +42,7 @@ class User(BaseModel):
     sex = Column(String(255))
     profile_url = Column(String(255))
     location = Column(String(255))
-    verified = Column(Boolean)
+    verified = Column(Boolean,default=False)
     volumeRequiredWhileReceiving = Column(Integer,default=0)
     volumeDonated = Column(Integer,default=0)
 

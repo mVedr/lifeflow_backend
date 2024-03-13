@@ -8,7 +8,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from .config import KAFKA_BOOTSTRAP_SERVERS, NOTIFICATION_TOPIC, loop
+from .config import (KAFKA_BOOTSTRAP_SERVERS, NOTIFICATION_TOPIC,
+                     VERIFICATION_TOPIC, loop)
 from .functions import *
 from .models import SessionLocal
 
@@ -135,10 +136,57 @@ async def notifyDonors(donor: apiModels.UserProfile):
 @route.post("/request/{entity_id}")
 async def requestBlood(entity_id: int,receiver: apiModels.UserRegisterWithEmail,
                     db: Session = Depends(get_db)):
-    res = request_blood(entity_id,receiver.email,db)
+    res = request_blood_through_entity(entity_id,receiver.email,db)
     if res:
         return {"message": "Added to waitlist"}
     raise HTTPException(404,"Resources not found")
+
+@route.get("/required/{email}")
+async def checkRequired(email: str,db: Session = Depends(get_db)):
+    usr = get_user_by_email(db,email)
+    if usr.volumeRequiredWhileReceiving > 0:
+        return {
+           "result": True,
+           "data": {
+            "remaining_blood": usr.volumeRequiredWhileReceiving,
+            "blood_group": usr.blood_group,
+            "verified": usr.verified,
+           } 
+        }
+    return {
+        "result": False
+    }
+
+@route.post("/initial-request/{vol}")
+async def initRequest(vol: int,url: str,receiver: apiModels.UserRegisterWithEmail,db: Session = Depends(get_db)):
+    usr: models.User = get_user_by_email(db,receiver.email)
+    if usr is None:
+        raise HTTPException(404,"User not found")
+    #usr.volumeRequiredWhileReceiving = vol
+    #db.commit()
+    producer = AIOKafkaProducer(loop=loop,bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,)
+    await producer.start()
+    '''
+        {
+          url, --> for downloading image
+          email --> for changing verified status
+        }
+    '''
+    obj = {
+        "url": url,
+        "email": receiver.email,
+    }
+    try:
+        
+        value_json = json.dumps(obj=obj).encode('utf-8')
+        print(f'Producer Sent: {value_json}')
+        await producer.send(topic=VERIFICATION_TOPIC,value=value_json)
+    except Exception as e:  
+        print(f"Consumer Error: {e}")  #
+    finally:
+        await producer.stop()
+        return {"message": "Request sent successfully"}
+
 
 @route.get("/waitlist/{entity_id}")
 async def getWaitlist(entity_id: int,db: Session = Depends(get_db)):

@@ -64,7 +64,7 @@ def donate_blood(entity_id: int,available_vol: int,email: str,db: Session):
     db.commit()
     return True
 
-def request_blood(entity_id: int,email: str,db: Session):
+def request_blood_through_entity(entity_id: int,email: str,db: Session):
     en = get_entity(db, entity_id)
     user = get_user_by_email(db, email)
     if en is None or user is None:
