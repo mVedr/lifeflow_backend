@@ -2,6 +2,7 @@ fastapi
 uvicorn
 asyncio
 aiohttp
+aiokafka
 aiosmtplib
 redis
 python-dateutil
