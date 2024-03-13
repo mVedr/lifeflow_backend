@@ -1,3 +1,6 @@
+import json
+
+import aioredis
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -6,6 +9,7 @@ from .functions import *
 from .models import SessionLocal
 
 route = APIRouter()
+redis = aioredis.Redis(host="localhost", port=6379,db=0)
 
 def get_db():
     db = SessionLocal()
@@ -132,3 +136,26 @@ async def get_donors_by_bg(entity_id: int,bg: str,  db: Session = Depends(get_db
     if res is None:
         return HTTPException(status_code=404,detail="Resources not found")
     return res
+
+@route.get("/locations")
+async def get_locations(lat: str ="17.5054036", lon: str ="78.4937645",radius: str = "2000"):
+
+    ans = await redis.get(f"{lat}&{lon}&{radius}")
+    if ans is not None:
+        return json.loads(ans)
+
+    loop = asyncio.get_event_loop()
+    res = await fetch_all(loop, lat, lon, radius)
+    bb_results = res[0]["results"]
+    hospital_results = res[1]["results"]
+
+    ans = []
+
+    for result in bb_results + hospital_results:
+        if result["type"] == "POI" and result["score"] > 0.70:
+            ans.append(result)
+
+    ans.sort(key=lambda x: x["score"], reverse=True)
+    rs = json.dumps(ans)
+    await redis.set(f"{lat}&{lon}&{radius}",rs)
+    return ans

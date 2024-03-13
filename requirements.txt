@@ -4,6 +4,7 @@ asyncio
 aiohttp
 aiosmtplib
 redis
+aioredis
 python-dateutil
 pydantic
 mysql-connector-python

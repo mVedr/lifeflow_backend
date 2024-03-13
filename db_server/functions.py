@@ -1,6 +1,10 @@
+import asyncio
+import ssl
+
+import aiohttp
 from sqlalchemy.orm import Session
 
-from . import apiModels, models, share
+from . import apiModels, config, models, share
 
 
 def get_user(db: Session,id: int):
@@ -116,3 +120,15 @@ def donors_by_blood_in_entity(entity_id: int,bg: str,  db: Session):
         if d.user_info.blood_group == bg:
             res.append(d.user_info)
     return res
+
+async def fetch(session,url):
+    async with session.get(url,ssl=ssl.SSLContext()) as response:
+        return await response.json()
+    
+async def fetch_all(loop,lat,lon,radius):
+    url_list = [
+    f'https://api.tomtom.com/search/2/search/blood.bank.json?key={config.TOMTOM_API_KEY}&lat={lat}&lon={lon}&radius={radius}',
+    f'https://api.tomtom.com/search/2/search/hospital.json?key={config.TOMTOM_API_KEY}&lat={lat}&lon={lon}&radius={radius}' ]
+    async with aiohttp.ClientSession(loop=loop) as session:
+        results = await asyncio.gather(*[fetch(session, url) for url in url_list], return_exceptions=True)
+        return results
