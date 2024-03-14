@@ -53,7 +53,7 @@ async def getUserProfile(id: int,db: Session = Depends(get_db)):
                             detail="User not found")
     return user
 
-@route.get("/user_e/{email}")
+@route.get("/user/email/{email}")
 async def getUserProfileByEmail(email: str,db: Session = Depends(get_db)):
     user = get_user_by_email(db,email)
     if user is None:
@@ -69,6 +69,15 @@ async def getEntityProfile(id: int,db: Session = Depends(get_db)):
         raise HTTPException(status_code=404,
                             detail="Entity not found")
     return entity
+
+@route.get("/entity/email/{email}")
+async def getUserProfileByEmail(email: str,db: Session = Depends(get_db)):
+    user = get_entity_by_email(db,email)
+    if user is None:
+        raise HTTPException(status_code=404,
+                            detail="Entity not found")
+    return user
+
 
 @route.patch("/user/{id}")    
 async def updateUserProfile(id: int,new_user: apiModels.UserProfile,db: Session = Depends(get_db)):
