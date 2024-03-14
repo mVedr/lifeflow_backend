@@ -140,3 +140,6 @@ async def fetch_search(loop, lat, lon, radius, q):
     async with aiohttp.ClientSession(loop=loop) as session:
         result = await fetch(session, url)
         return result
+    
+def get_e_by_tom(tomtom_id: str ,db: Session):
+    return db.query(models.Entity).filter(models.Entity.id == tomtom_id).one_or_none()
