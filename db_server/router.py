@@ -154,7 +154,10 @@ async def checkRequired(email: str,db: Session = Depends(get_db)):
            } 
         }
     return {
-        "result": False
+        "result": False,
+        "data":{
+            "remaining_blood": 0,
+        }
     }
 
 @route.post("/initial-request/{vol}")
@@ -166,12 +169,6 @@ async def initRequest(vol: int,url: str,receiver: apiModels.UserRegisterWithEmai
     #db.commit()
     producer = AIOKafkaProducer(loop=loop,bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,)
     await producer.start()
-    '''
-        {
-          url, --> for downloading image
-          email --> for changing verified status
-        }
-    '''
     obj = {
         "url": url,
         "email": receiver.email,
@@ -262,3 +259,13 @@ async def search(lat: str ="17.5054036", lon: str ="78.4937645",radius: str = "5
     rs = json.dumps(ans)
     await redis.set(f"{q}&{lat}&{lon}&{radius}",rs)
     return ans
+
+@route.post("/setVolume")
+async def setVolume(req :apiModels.VolumeSetRequest,db: Session = Depends(get_db)):
+    usr: models.User = get_user_by_email(db,req.email)
+    if usr is None:
+        raise HTTPException(404,"No such user found")
+    usr.volumeRequiredWhileReceiving = req.vol
+    usr.verified = True
+    db.commit()
+    return {"message":"Verified in the database"}

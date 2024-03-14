@@ -31,7 +31,6 @@ async def consume():
                 1. check for hospital in users location
                 2. If present, verify them in db and send them an email saying they are verified
             '''
-            print(res)
             if(len(res)>0):
                 print("You are verified!!!")
                 producer = AIOKafkaProducer(loop=loop,bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,)
@@ -42,16 +41,17 @@ async def consume():
                     body=
                     f'''
      Hi,
-        You have recently requested to donate blood, your request has been verified and you can know request blood at various hospitals and blood banks.
+        You have recently requested to donate blood, your request has been 
+        verified and you can now request blood at various hospitals and blood banks.
 
     Regards,
-     LifeFlow.
-                    '''
+    LifeFlow.'''
                 )
                 try:
                     print(f'Producer Sent: {message}')
                     value_json = json.dumps(message.__dict__).encode('utf-8')
                     await producer.send(topic=NOTIFICATION_TOPIC,value=value_json)
+                    await post_request(data["email"], data["vol"]) 
                 except Exception as e:  
                     print(f"Consumer Error: {e}")  
                 finally:
@@ -60,6 +60,7 @@ async def consume():
                 print("You could not be verified :(")
                 producer = AIOKafkaProducer(loop=loop,bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,)
                 await producer.start()
+
                 message :Message = Message(
                     to=data["email"],
                     subject=f'LifeFlow - Your request has been could not verified',
@@ -77,10 +78,13 @@ async def consume():
                 try:
                     print(f'Producer Sent: {message}')
                     value_json = json.dumps(message.__dict__).encode('utf-8')
+                    
                     await producer.send(topic=NOTIFICATION_TOPIC,value=value_json)
+                    
                 except Exception as e:  
                     print(f"Consumer Error: {e}")  
                 finally:
+                    print("Reached...")
                     await producer.stop()                
             # !!! UNCOMMENT BELOW PART !!!
             # async with aiohttp.ClientSession() as session:
@@ -99,3 +103,17 @@ async def consume():
         print(f"Consumer Error: {e}")
     finally:
         await consumer.stop()
+
+
+async def post_request(email, vol):
+    try:
+        async with aiohttp.ClientSession() as session:
+            response = await session.post(url="http://127.0.0.1:8001/setVolume",
+                                          json={
+                                              "email": email,
+                                              "vol": vol
+                                          })
+            await response.json()
+
+    except aiohttp.ClientError as e:
+        print("Client error:", e)

@@ -60,5 +60,3 @@ async def get_image_remote(image_url) -> str:
 #     image_url = "https://image.slidesharecdn.com/5156041-5950-150621072950-lva1-app6891/75/max-hospital-shalimar-bagh-doctors-prescription-1-2048.jpg"
 #     result = await get_image_remote(image_url)
 #     print(result)
-
-# asyncio.run(main())

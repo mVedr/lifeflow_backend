@@ -36,4 +36,8 @@ class EntityProfile(BaseModel):
     secondary_ph_no :str
     primary_email :str
     secondary_email :str
+
+class VolumeSetRequest(BaseModel):
+    email :str
+    vol :int
     
