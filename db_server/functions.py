@@ -40,9 +40,10 @@ def create_user(db: Session,user: apiModels.UserRegisterWithEmail):
     db.commit()
     return new_user
 
-def create_entity(db: Session,entity: apiModels.EntityRegister):
+def create_entity(db: Session,entity: apiModels.EntityRegister,tomtom_id: str):
     if get_entity_by_email(entity.primary_email)!=None and get_entity_by_phone(entity.primary_ph_no)!=None and get_entity_by_regd(entity.reg_number)!=None:
         new_entity = models.Entity(**entity.model_dump())
+        new_entity.tomtom_id = tomtom_id
         db.add(new_entity)
         db.commit()
         return new_entity
@@ -63,7 +64,7 @@ def donate_blood(entity_id: int,available_vol: int,email: str,db: Session):
     db.commit()
     return True
 
-def request_blood(entity_id: int,email: str,db: Session):
+def request_blood_through_entity(entity_id: int,email: str,db: Session):
     en = get_entity(db, entity_id)
     user = get_user_by_email(db, email)
     if en is None or user is None:

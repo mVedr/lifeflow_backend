@@ -16,6 +16,11 @@ class UserProfile(BaseModel):
 class UserRegisterWithEmail(BaseModel):
     email: str
 
+class UserRegisterWithEmailCords(BaseModel):
+    email: str
+    lat: str
+    lon: str
+
 class EntityRegister(BaseModel):
     primary_email: str
     primary_ph_no: str
@@ -31,4 +36,10 @@ class EntityProfile(BaseModel):
     secondary_ph_no :str
     primary_email :str
     secondary_email :str
-    
+
+class VolumeSetRequest(BaseModel):
+    email :str
+    vol :int
+
+class EntityEmailReq(BaseModel):
+    email :str

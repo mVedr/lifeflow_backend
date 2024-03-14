@@ -1,30 +1,23 @@
-from PIL import Image
-from pytesseract import pytesseract
+import asyncio
 
-# for image
-path_to_tesseract = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
-image_path = r"download.jpg"
-  
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
-img = Image.open(image_path) 
-  
+from . import router
 
-pytesseract.tesseract_cmd = path_to_tesseract 
+app = FastAPI()
 
-text = pytesseract.image_to_string(img) 
-print(text)
+@app.get('/')
+async def Home():
+    res = '''
+    <html>
+        <body>
+            <h2>Verification Service</h2>
+        </body>
+    </html>
+    '''
 
+    return HTMLResponse(res)
 
-from pypdf import PdfReader
-
-reader = PdfReader('example.pdf') 
-  
- 
-print(len(reader.pages)) 
-  
-
-page = reader.pages[0] 
-  
-
-text = page.extract_text() 
-print(text) 
+app.include_router(router.route)
+asyncio.create_task(router.consume())

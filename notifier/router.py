@@ -44,16 +44,3 @@ async def consume():
     finally:
         await consumer.stop()
 
-
-@route.post('/create')
-async def send(message: Message):
-    producer = AIOKafkaProducer(loop=loop,bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
-    await producer.start()
-    try:
-        print(f'Producer Sent: {message}')
-        value_json = json.dumps(message.__dict__).encode('utf-8')
-        await producer.send(topic=KAFKA_TOPIC,value=value_json)
-    except Exception as e:  
-        print(f"Consumer Error: {e}")  #
-    finally:
-        await producer.stop()
