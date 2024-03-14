@@ -40,4 +40,6 @@ class EntityProfile(BaseModel):
 class VolumeSetRequest(BaseModel):
     email :str
     vol :int
-    
+
+class EntityEmailReq(BaseModel):
+    email :str

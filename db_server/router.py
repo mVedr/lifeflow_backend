@@ -1,4 +1,5 @@
 import json
+from operator import attrgetter
 
 import aioredis
 import aiosmtplib
@@ -8,6 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from . import share
 from .config import (KAFKA_BOOTSTRAP_SERVERS, NOTIFICATION_TOPIC,
                      VERIFICATION_TOPIC, loop)
 from .functions import *
@@ -278,3 +280,45 @@ async def setVolume(req :apiModels.VolumeSetRequest,db: Session = Depends(get_db
     usr.verified = True
     db.commit()
     return {"message":"Verified in the database"}
+
+@route.get("/initialiseTransaction/{user_id}")
+async def initializeTransaction(user_id: int,entity_id: int,db: Session = Depends(get_db)):
+    en = get_entity(db,entity_id)
+    user = get_user(db,user_id)
+    req_bg = user.blood_group
+    req_vol = user.volumeRequiredWhileReceiving
+    donors: list[models.Donor] = en.donors
+    donors = sorted(en.donors, key=attrgetter('available_vol'))
+    donorsThatCanDonate = []
+    donationCanBeCompletedFully = False
+    for d in donors:
+        d_vol = d.available_vol
+        
+        d_info: models.User = d.user_info
+        if d_info.blood_group in share.can_receive_from[req_bg]:
+            if req_vol > d_vol:
+                donorsThatCanDonate.append(
+                    {
+                        "donor": d,
+                        "rem": 0
+                    }
+                )
+                req_vol -= d_vol
+            else:
+                donorsThatCanDonate.append(
+                    {
+                        "donor": d,
+                        "rem": d_vol-req_vol
+                    }
+                )
+                donationCanBeCompletedFully = True
+                break
+    
+    return {
+       "donorsThatCanDonate": donorsThatCanDonate,
+        "donationCanBeCompletedFully": donationCanBeCompletedFully
+    }
+
+@route.post("/completeTransaction/{user_id}")
+async def completeTransaction(user_id: int,req: apiModels.EntityEmailReq,db: Session = Depends(get_db)):
+    pass
