@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from . import share
 from .config import (KAFKA_BOOTSTRAP_SERVERS, NOTIFICATION_TOPIC,
-                     VERIFICATION_TOPIC, loop)
+                     TRANSACTION_TOPIC, VERIFICATION_TOPIC, loop)
 from .functions import *
 from .models import SessionLocal
 
@@ -81,6 +81,18 @@ async def getUserProfileByEmail(email: str,db: Session = Depends(get_db)):
                             detail="Entity not found")
     return user
 
+@route.get("/entity/tomtom/{tomtom_id}")
+async def getEByTomtom(tomtom_id: str,db: Session = Depends(get_db)):
+    E = get_e_by_tom(tomtom_id,db=db)
+    if E is None:
+        return {
+            "status": "false",
+            "data": {}
+        }
+    return {
+        "status": "true",
+        "data" : E
+    }
 
 @route.patch("/user/{id}")    
 async def updateUserProfile(id: int,new_user: apiModels.UserProfile,db: Session = Depends(get_db)):
@@ -327,10 +339,16 @@ async def completeTransaction(user_id: int, entity_id: int, db: Session = Depend
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             res = await resp.json()
-    #print(res)
+    print(res)
+    
+    producer  = AIOKafkaProducer(loop=loop,bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,)
+
+    await producer.start()
+
+    value_json = json.dumps(res).encode('utf-8')
+    await producer.send(value=value_json,topic=TRANSACTION_TOPIC)
+
     donorsThatCanDonate = res["donorsThatCanDonate"]
-    print(donorsThatCanDonate)
-    print(".................")
     donationCanBeCompletedFully = res["donationCanBeCompletedFully"]
     #print(donationCanBeCompletedFully)
     sub = 0
