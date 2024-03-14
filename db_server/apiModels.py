@@ -16,6 +16,11 @@ class UserProfile(BaseModel):
 class UserRegisterWithEmail(BaseModel):
     email: str
 
+class UserRegisterWithEmailCords(BaseModel):
+    email: str
+    lat: str
+    lon: str
+
 class EntityRegister(BaseModel):
     primary_email: str
     primary_ph_no: str

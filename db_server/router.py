@@ -158,7 +158,7 @@ async def checkRequired(email: str,db: Session = Depends(get_db)):
     }
 
 @route.post("/initial-request/{vol}")
-async def initRequest(vol: int,url: str,receiver: apiModels.UserRegisterWithEmail,db: Session = Depends(get_db)):
+async def initRequest(vol: int,url: str,receiver: apiModels.UserRegisterWithEmailCords,db: Session = Depends(get_db)):
     usr: models.User = get_user_by_email(db,receiver.email)
     if usr is None:
         raise HTTPException(404,"User not found")
@@ -175,6 +175,9 @@ async def initRequest(vol: int,url: str,receiver: apiModels.UserRegisterWithEmai
     obj = {
         "url": url,
         "email": receiver.email,
+        "lat": receiver.lat,
+        "lon": receiver.lon,
+        "vol": vol
     }
     try:
         
@@ -219,7 +222,7 @@ async def get_donors_by_bg(entity_id: int,bg: str,  db: Session = Depends(get_db
     return res
 
 @route.get("/locations")
-async def get_locations(lat: str ="17.5054036", lon: str ="78.4937645",radius: str = "2000"):
+async def get_locations(lat: str ="17.5054036", lon: str ="78.4937645",radius: str = "5000"):
 
     ans = await redis.get(f"{lat}&{lon}&{radius}")
     if ans is not None:
@@ -242,7 +245,7 @@ async def get_locations(lat: str ="17.5054036", lon: str ="78.4937645",radius: s
     return ans
 
 @route.get("/search")
-async def search(lat: str ="17.5054036", lon: str ="78.4937645",radius: str = "2000",q: str=""):
+async def search(lat: str ="17.5054036", lon: str ="78.4937645",radius: str = "5000",q: str=""):
 
     ans = await redis.get(f"{q}&{lat}&{lon}&{radius}")
     if ans is not None:
