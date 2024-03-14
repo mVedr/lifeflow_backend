@@ -83,7 +83,7 @@ async def getUserProfileByEmail(email: str,db: Session = Depends(get_db)):
 
 @route.get("/entity/tomtom/{tomtom_id}")
 async def getEByTomtom(tomtom_id: str,db: Session = Depends(get_db)):
-    E = get_e_by_tom(tomtom_id,db=db)
+    E = get_e_by_tom(tomtom_id,db)
     if E is None:
         return {
             "status": "false",
