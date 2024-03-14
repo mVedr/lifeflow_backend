@@ -1,6 +1,7 @@
 import json
 from operator import attrgetter
 
+import aiohttp
 import aioredis
 import aiosmtplib
 from aiokafka import AIOKafkaProducer
@@ -320,5 +321,35 @@ async def initializeTransaction(user_id: int,entity_id: int,db: Session = Depend
     }
 
 @route.post("/completeTransaction/{user_id}")
-async def completeTransaction(user_id: int,req: apiModels.EntityEmailReq,db: Session = Depends(get_db)):
-    pass
+async def completeTransaction(user_id: int, entity_id: int, db: Session = Depends(get_db)):
+    url = f'http://127.0.0.1:8001/initialiseTransaction/{user_id}/?entity_id={entity_id}'
+    res = None
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            res = await resp.json()
+    #print(res)
+    donorsThatCanDonate = res["donorsThatCanDonate"]
+    print(donorsThatCanDonate)
+    print(".................")
+    donationCanBeCompletedFully = res["donationCanBeCompletedFully"]
+    #print(donationCanBeCompletedFully)
+    sub = 0
+    for dnr in donorsThatCanDonate:
+        rem = dnr["rem"]
+        dnrId = dnr["donor"]["id"]
+        dono = db.query(models.Donor).filter(models.Donor.id == dnrId).one()
+        sub += rem
+        if rem == 0:
+            st = db.query(models.Donor).filter(models.Donor.id == dnrId).delete()
+        else:
+            dono.available_vol = rem
+    if donationCanBeCompletedFully:
+        user = db.query(models.User).filter(models.User.id == user_id).one()
+        user.verified = False
+        user.volumeRequiredWhileReceiving = 0
+    else:   
+        user = db.query(models.User).filter(models.User.id == user_id).one()
+        user.volumeRequiredWhileReceiving -= rem
+    db.commit()
+    #Send confirmation for transaction
+    return {"message":"The donation has been completed"}

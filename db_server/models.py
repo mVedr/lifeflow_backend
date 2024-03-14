@@ -19,7 +19,7 @@ class ReprMixin:
         return f'{package}.{class_}({sattrs})'
 
 class BaseModel(Base,
-               # ReprMixin
+                ReprMixin
                 ):
     __abstract__ = True
     __allow_unmapped__ = True
