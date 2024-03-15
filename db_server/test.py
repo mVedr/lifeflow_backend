@@ -19,8 +19,8 @@ u4 = session.query(User).where(User.id == 2).one()
 e1 = session.query(Entity).where(Entity.id == 1).one()
 # # print(f'{e1.name} , {e1.primary_email}')
 
-# e2 = session.query(Entity).where(Entity.id == 5).one()
-# # print(f'{e2.name} , {e2.primary_email}')
+# # e2 = session.query(Entity).where(Entity.id == 5).one()
+# # # print(f'{e2.name} , {e2.primary_email}')
 
 d1 = Donor()
 d1.available_vol = 4
