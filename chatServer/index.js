@@ -35,8 +35,6 @@ socketio.on('connection',(socket)=>{
 })
 
 
-
-
 app.get('/api',(req,res)=>{
     console.log(req,res);
 })

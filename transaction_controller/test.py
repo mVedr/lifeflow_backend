@@ -6,10 +6,9 @@ blockchain_address = 'http://127.0.0.1:9545'
 
 web3 = Web3(HTTPProvider(blockchain_address))
 
-# Set the sender address
 sender_address = web3.eth.accounts[0]
 
-compiled_contract_path = 'blockchain_server/build/contracts/Lifeflow.json'
+compiled_contract_path = 'C:/Ved/Academic/Coding/Projects/lifeflow_backend/blockchain_server/build/contracts/Lifeflow.json'
 
 deployed_contract_address = "0xa37931cb6F45D93eBf11422e993515be4775539C"
 
@@ -23,15 +22,19 @@ contract = web3.eth.contract(
     abi=contract_abi
 )
 
+def addTransaction(did: int,rid: int,eid: int,vol: int):
+    txh = contract.functions.addTransaction(did,rid,eid,vol).transact({'from': sender_address})
+    r = web3.eth.wait_for_transaction_receipt(txh)
+    
 
-# tx_hash1 = contract.functions.addTransaction(2, 5,1, 6).transact({'from': sender_address})
-# tx_hash2 = contract.functions.addTransaction(4, 8,7, 2).transact({'from': sender_address})
+def getAllTransactions():
+    return contract.functions.getTransactions().call({'from': sender_address})
 
-# r1 = web3.eth.wait_for_transaction_receipt(tx_hash1)
-# r2 = web3.eth.wait_for_transaction_receipt(tx_hash2)
+def getTransactionByID(id: int):
+    return contract.functions.getTransactionsByUserID(id).call()
 
-# Fetching transactions after adding
-output = contract.functions.getTransactionsByUserID(2).call()
-print(output)
-op = contract.functions.getTransactions().call({'from': sender_address})
-print(op)
+def getTransactionByEID(id: int):
+    return contract.functions.getTransactionsByEID(id).call()
+
+#addTransaction(6,3,5,8)
+#print(getAllTransactions())

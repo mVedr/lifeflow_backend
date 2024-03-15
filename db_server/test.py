@@ -22,6 +22,9 @@ e1 = session.query(Entity).where(Entity.id == 1).one()
 # # e2 = session.query(Entity).where(Entity.id == 5).one()
 # # # print(f'{e2.name} , {e2.primary_email}')
 
+u1.volumeRequiredWhileReceiving = 9
+u1.verified = True
+
 d1 = Donor()
 d1.available_vol = 4
 d1.user_info = u2

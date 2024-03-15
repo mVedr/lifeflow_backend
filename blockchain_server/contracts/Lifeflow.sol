@@ -14,6 +14,7 @@ contract Lifeflow {
 
     mapping(address => Transaction[]) public transactions;
     mapping(uint32 => Transaction[]) public transactionsByID;
+    mapping(uint32 => Transaction[]) public transactionsByEID;
 
     constructor() {
         owner = msg.sender;
@@ -40,6 +41,7 @@ contract Lifeflow {
        transactions[msg.sender].push(tr);
        transactionsByID[tr.did].push(tr);
        transactionsByID[tr.rid].push(tr);
+       transactionsByEID[tr.eid].push(tr);
        //return tr;
     }
 
@@ -49,5 +51,9 @@ contract Lifeflow {
 
     function getTransactionsByUserID(uint32 id) public view returns (Transaction[] memory) {
         return transactionsByID[id];
+    }
+
+    function getTransactionsByEID(uint32 id) public view returns (Transaction[] memory) {
+        return transactionsByEID[id];
     }
 }

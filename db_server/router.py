@@ -10,6 +10,10 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from transaction_controller.test import (getAllTransactions,
+                                         getTransactionByEID,
+                                         getTransactionByID)
+
 from . import share
 from .config import (KAFKA_BOOTSTRAP_SERVERS, NOTIFICATION_TOPIC,
                      TRANSACTION_TOPIC, VERIFICATION_TOPIC, loop)
@@ -36,8 +40,10 @@ def get_db():
 @route.post("/user/create")
 async def createUser(user: apiModels.UserRegisterWithEmail,db: Session = Depends(get_db)):
     new_user = create_user(db,user)
+
     if new_user is  None:
         return {"message": "User already exists in DB"}
+    #await redis.set(f"user/{new_user.id}",json.dumps(new_user))
     return {"message": "User created successfully"}
     
 
@@ -329,7 +335,8 @@ async def initializeTransaction(user_id: int,entity_id: int,db: Session = Depend
     
     return {
        "donorsThatCanDonate": donorsThatCanDonate,
-        "donationCanBeCompletedFully": donationCanBeCompletedFully
+        "donationCanBeCompletedFully": donationCanBeCompletedFully,
+        "receiverId": user_id
     }
 
 @route.post("/completeTransaction/{user_id}")
@@ -347,7 +354,7 @@ async def completeTransaction(user_id: int, entity_id: int, db: Session = Depend
 
     value_json = json.dumps(res).encode('utf-8')
     await producer.send(value=value_json,topic=TRANSACTION_TOPIC)
-
+    await producer.stop()
     donorsThatCanDonate = res["donorsThatCanDonate"]
     donationCanBeCompletedFully = res["donationCanBeCompletedFully"]
     #print(donationCanBeCompletedFully)
@@ -371,3 +378,18 @@ async def completeTransaction(user_id: int, entity_id: int, db: Session = Depend
     db.commit()
     #Send confirmation for transaction
     return {"message":"The donation has been completed"}
+
+'''
+ returns list of [donor_id,receiver_id,entity_id,volume]
+'''
+@route.get("/bchain/all")
+async def getAllFromBC():
+    return getAllTransactions()
+
+@route.get("/bchain/entity/{id}")
+async def getEntityFromBC(id :int):
+    return getTransactionByID(id)
+
+@route.get("/bchain/user/{id}")
+async def getUserFromBC(id :int):
+    return getTransactionByEID(id)
