@@ -1,43 +1,48 @@
-const express=require('express');
-const app =express();
+const express = require('express');
+const app = express();
 const http = require('http').Server(app);
-const cors=require('cors');
-const socketio=require('socket.io')(http,{
-    cors:{
-        origin:"*",
+const cors = require('cors');
+const socketio = require('socket.io')(http, {
+    cors: {
+        origin: "*",
     }
-})
-const port=4000;
-app.use(express.urlencoded({extended:true}));
-app.use(express.json());
+});
+const port = 4000;
+const userSocketMap = {};
+
 app.use(cors());
-// socketio.use((socket,next)=>{
-//     const username=socket.handshake.auth.username;
-//     if(!username){
-//         return next(new Error("invalid username"))
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-//     }
-//     socket.username=username;
-//     next();
-// })
-socketio.on('connection',(socket)=>{
+socketio.on('connection', (socket) => {
+    socket.on('register', (email) => {
+        console.log(`${email} connected`);
+        userSocketMap[email] = socket.id; // Store the user's email and socket ID
+    });
 
-    console.log(`${socket.id}user connected`);
+    socket.on('disconnect', () => {
+        // Remove the user's email and socket ID from the mapping when they disconnect
+        Object.keys(userSocketMap).forEach((email) => {
+            if (userSocketMap[email] === socket.id) {
+                delete userSocketMap[email];
+                console.log(`${email} disconnected`);
+            }
+        });
+    });
 
-    socket.on('personal',({
-        senderEmail,
-        message,
-      })=>{
-        console.log(senderEmail,message);
-        socketio.to(socket.id).emit('personal',{message});
-        
-    })
-})
+    socket.on('sendToUser', ({ recipientEmail, message }) => {
+        const recipientSocketId = userSocketMap[recipientEmail];
+        if (recipientSocketId) {
+            console.log(`Sending message from server to ${recipientEmail}`);
+            socketio.to(recipientSocketId).emit('personal', { senderEmail: 'server', message }); // Send the message to the recipient's socket
+        }
+    });
+});
 
+app.get('/api', (req, res) => {
+    res.send('API endpoint');
+});
 
-app.get('/api',(req,res)=>{
-    console.log(req,res);
-})
-http.listen(port,()=>{
-    console.log(`server listening on port ${port}`)
-})
+http.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+});
