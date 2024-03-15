@@ -6,10 +6,7 @@ from . import router
 
 app = FastAPI()
 origins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://localhost:8002",
-    "http://localhost:8003"
+   "*",
 ]
 
 app.add_middleware(
