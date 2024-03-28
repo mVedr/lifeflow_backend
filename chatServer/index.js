@@ -17,11 +17,10 @@ app.use(express.json());
 socketio.on('connection', (socket) => {
     socket.on('register', (email) => {
         console.log(`${email} connected`);
-        userSocketMap[email] = socket.id; // Store the user's email and socket ID
+        userSocketMap[email] = socket.id; 
     });
 
     socket.on('disconnect', () => {
-        // Remove the user's email and socket ID from the mapping when they disconnect
         Object.keys(userSocketMap).forEach((email) => {
             if (userSocketMap[email] === socket.id) {
                 delete userSocketMap[email];
@@ -34,7 +33,7 @@ socketio.on('connection', (socket) => {
         const recipientSocketId = userSocketMap[recipientEmail];
         if (recipientSocketId) {
             console.log(`Sending message from server to ${recipientEmail}`);
-            socketio.to(recipientSocketId).emit('personal', { senderEmail: 'server', message }); // Send the message to the recipient's socket
+            socketio.to(recipientSocketId).emit('personal', { senderEmail: 'server', message }); 
         }
     });
 });
